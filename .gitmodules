@@ -1,0 +1,3 @@
+[submodule "src/lib/nanogui"]
+	path = src/lib/nanogui
+	url = https://github.com/mitsuba-renderer/nanogui
