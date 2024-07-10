@@ -2,3 +2,5 @@ CMakeCache.txt
 CMakeFiles
 bin/*
 build/*
+compile_commands.json
+.cache
