@@ -1,3 +1,6 @@
 [submodule "src/lib/nanogui"]
 	path = src/lib/nanogui
 	url = https://github.com/mitsuba-renderer/nanogui
+[submodule "src/lib/lodepng"]
+	path = src/lib/lodepng
+	url = https://github.com/lvandeve/lodepng
