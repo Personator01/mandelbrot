@@ -30,7 +30,15 @@ add_executable(MandelbrotSingle
 	${CMAKE_CURRENT_SOURCE_DIR}/main.cpp 
 	${CMAKE_CURRENT_SOURCE_DIR}/mb_single.cpp)
 
+add_executable(MandelbrotCuda
+	${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/mb_cuda.cu)
+
+#set_target_properties( MandelbrotCuda
+#                       PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+
 linklibs(MandelbrotSingle)
+linklibs(MandelbrotCuda)
 
 set(CMAKE_C_COMPILER clang)
 set(CMAKE_CXX_COMPILER clang++)
