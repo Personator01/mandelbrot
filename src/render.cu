@@ -54,13 +54,15 @@ __global__ void mb_kernel(unsigned char* data, int cx, int cy, float fcx, float 
 }
 
 void compute_img(unsigned char* dev_ptr, Point center, int width, int height, float scale, int iters) {
+    printf("Running cuda calculations\n");
     int x_c = width / 2, y_c = height / 2;
 
     dim3 threadsPerBlock(16, 16);
     dim3 numBlocks(width / threadsPerBlock.x, height / threadsPerBlock.y);
 
     mb_kernel<<<numBlocks, threadsPerBlock>>>(dev_ptr, x_c, y_c, center.x, center.y, scale, iters, height, width);
-    cudaDeviceSynchronize();
+    cu_assert(cudaPeekAtLastError());
+    cu_assert(cudaDeviceSynchronize());
 
 }
 
@@ -70,23 +72,51 @@ struct cudaGraphicsResource *buf_rs;
 
 
 void loadTexture(GLuint texture, GLuint buffer, int width, int height) {
+    printf("loading texture 1\n");
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, buffer);
     glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+    glGenerateMipmap(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void loadTexture2(GLuint texture, int width, int height) {
-    std::vector<unsigned char> zeroes = std::vector<unsigned char>(size, 0);
-    for (int i = 0; i < size / 4; i++) {
-	zeroes[i] = UCHAR_MAX;
-	zeroes[i+3] = UCHAR_MAX;
-    }
-    glBindTexture(GL_TEXTURE_2D, gl_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, zeroes.data());
+void subTexture(GLuint texture, GLuint buffer, int width, int height) {
+    printf("loading texture 1\n");
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, buffer);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+    glGenerateMipmap(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
+/**
+void loadTestTexture(GLuint texture, int width, int height) {
+    printf("loading texture 2\n");
+    std::vector<unsigned char> zeroes = std::vector<unsigned char>(size, 0);
+    for (int i = 0; i < size / 4; i++) {
+	zeroes[4*i] = UCHAR_MAX;
+	zeroes[4*i+3] = UCHAR_MAX;
+    }
+    glBindTexture(GL_TEXTURE_2D, gl_texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, zeroes.data());
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void subTestTexture(GLuint texture, int width, int height) {
+    printf("sub texture 2\n");
+    std::vector<unsigned char> zeroes = std::vector<unsigned char>(size, 0);
+    for (int i = 0; i < size / 4; i++) {
+	zeroes[4*i] = UCHAR_MAX;
+	zeroes[4*i+3] = UCHAR_MAX;
+    }
+    glBindTexture(GL_TEXTURE_2D, gl_texture);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, zeroes.data());
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+*/
 
 GLuint init(int width, int height) {
     size = width * height * 4;
@@ -100,7 +130,7 @@ GLuint init(int width, int height) {
     glBufferStorage(GL_TEXTURE_BUFFER, size * sizeof(unsigned char), zeroes.data(), GL_MAP_WRITE_BIT); 
     glBindBuffer(GL_TEXTURE_BUFFER, 0);
 
-    loadTexture2(gl_texture, width, height);
+    loadTexture(gl_texture, gl_buf, width, height);
 
     cudaGraphicsGLRegisterBuffer(&buf_rs, gl_buf, cudaGraphicsRegisterFlagsNone);
 
@@ -120,11 +150,11 @@ void render(Point center, int width, int height, float scale, int iters) {
 
     printf("Drawing centered %f, %f, w %d, h %d, scale %f, iters %d\n", center.x, center.y, width, height, scale, iters); 
 
-    //compute_img(mapped_data, center, width, height, scale, iters);
+    compute_img(mapped_data, center, width, height, scale, iters);
     cu_assert(cudaGraphicsUnmapResources(1, &buf_rs));
 
-    //loadTexture(gl_texture, gl_buf, width, height);
-    loadTexture2(gl_texture, width, height);
+    subTexture(gl_texture, gl_buf, width, height);
+    //subTexture2(gl_texture, width, height);
 }
 
 
