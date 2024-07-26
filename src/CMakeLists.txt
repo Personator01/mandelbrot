@@ -7,6 +7,12 @@ find_package(PNG REQUIRED)
 include_directories(${PNG_INCLUDE_DIR})
 include_directories(${LODEPNG_INCLUDE})
 
+set(OpenGL_GL_PREFERENCE GLVND)
+find_package(OpenGL REQUIRED)
+find_package(GLUT REQUIRED)
+find_package(GLEW REQUIRED)
+include_directories(${GLEW_INCLUDE_DIRS})
+
 find_package(SDL2 CONFIG COMPONENTS SDL2)
 find_package(SDL2 CONFIG COMPONENTS SDL2main)
 if (NOT ${SDL2_FOUND})
@@ -34,11 +40,17 @@ add_executable(MandelbrotCuda
 	${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/mb_cuda.cu)
 
-#set_target_properties( MandelbrotCuda
-#                       PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+add_executable(MandelbrotViewerCuda
+	${CMAKE_CURRENT_SOURCE_DIR}/mainglcu.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/render.cu
+	)
+
+set_target_properties(MandelbrotViewerCuda PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 linklibs(MandelbrotSingle)
 linklibs(MandelbrotCuda)
+
+target_link_libraries(MandelbrotViewerCuda PRIVATE OpenGL::OpenGL OpenGL::GLU ${GLUT_LIBRARIES} ${GLEW_LIBRARIES})
 
 set(CMAKE_C_COMPILER clang)
 set(CMAKE_CXX_COMPILER clang++)

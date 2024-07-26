@@ -3,7 +3,6 @@
 #include <exception>
 #include <cuda/std/complex>
 #include <stdexcept>
-#include <print>
 #define proportion_curve(in) in
 
 #define cu_assert(val) { cu_err((val), __FILE__, __LINE__); }
@@ -51,7 +50,7 @@ void calculate_mb(std::vector<std::vector<float>>& in_v, const Point center, con
     if (n_cols < 1) {
 	throw std::invalid_argument("vector's column count must be more than 0");
     }
-    int x_c = n_cols / 2, y_c = n_cols / 2;
+    int x_c = n_cols / 2, y_c = n_rows / 2;
 
     float* dev_data;
     cu_assert(cudaMalloc(&dev_data, sizeof(float) * n_cols  * n_rows));

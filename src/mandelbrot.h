@@ -1,3 +1,5 @@
+#ifndef MANDELBROT_H
+#define MANDELBROT_H
 #include <vector>
 #include <concepts>
 
@@ -14,3 +16,4 @@ struct Point {
 * Sets each element of the 2d vector within the range 0.0-1.0 based on how quickly it converges to 0.
 */
 void calculate_mb(std::vector<std::vector<float>>& out_v, const Point center, const float scale, int n_iters = 10); 
+#endif
