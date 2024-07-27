@@ -5,5 +5,6 @@
 #include "mandelbrot.h"
 GLuint init(int height, int width);
 
-void render(Point center, int width, int height, float scale, int iters);
+template <typename T>
+void render(Point<T> center, int width, int height, T scale, int iters);
 #endif

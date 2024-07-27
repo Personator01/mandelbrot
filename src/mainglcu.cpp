@@ -11,10 +11,10 @@
 const int WINDOW_WIDTH = 1280;
 const int WINDOW_HEIGHT = 720;
 
-Point center{0, 0};
-int width{2*WINDOW_WIDTH};
-int height{2*WINDOW_HEIGHT};
-float scale{100};
+Point<double> center{0, 0};
+int width{WINDOW_WIDTH};
+int height{WINDOW_HEIGHT};
+double scale{100};
 int iters{100};
 
 void display();
@@ -79,14 +79,28 @@ void keys (unsigned char key, int x, int y) {
     break;
     case ',':
 	if (iters > 1) {
-	    iters--;
+	    if (iters < 25) {
+		iters--;
+	    } else if (iters < 100) {
+		iters -= 5;
+	    } else {
+		iters -= 10;
+	    }
 	}
 	break;
     case '.':
-	if (iters < INT_MAX) {
-	    iters++;
+	if (iters < INT_MAX - 10) {
+	    if (iters < 25) {
+		iters++;
+	    } else if (iters < 100) {
+		iters += 5;
+	    } else {
+		iters += 10;
+	    }
 	}
 	break;
+    case 'r':
+	glutReshapeWindow(WINDOW_WIDTH, WINDOW_HEIGHT);
     }
     glutPostRedisplay();
 }
@@ -109,12 +123,22 @@ void specialKeys(int key, int x, int y) {
     glutPostRedisplay();
 }
 
+Point<float> get_float_center() {
+    return {static_cast<float>(center.x), static_cast<float>(center.y)};
+}
+
 void display(){
     std::println("2mogus");
     //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     auto start_t = std::chrono::high_resolution_clock::now();
-    render(center, width, height, scale, iters);
+
+    if (scale > 5e6) {
+	render(center, width, height, scale, iters);
+    } else {
+	render(get_float_center(), width, height, static_cast<float>(scale), iters);
+    }
+
     auto end_t = std::chrono::high_resolution_clock::now();
     auto dt = end_t - start_t;
     std::println("Computed in {:%S} seconds", dt);

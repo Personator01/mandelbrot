@@ -9,7 +9,7 @@
 inline void cu_err(cudaError_t code, const char* file, int line) {
     if (code != cudaSuccess) {
 	fprintf(stderr, "CUDA: %s %s %d", cudaGetErrorString(code), file, line);
-	throw new std::exception();
+	throw std::exception();
     }
 }
 
@@ -41,7 +41,7 @@ __global__ void mb_kernel(float* data, int cx, int cy, float fcx, float fcy, flo
 }
 
 
-void calculate_mb(std::vector<std::vector<float>>& in_v, const Point center, const float scale, const int n_iters) {
+void calculate_mb(std::vector<std::vector<float>>& in_v, const Point<float> center, const float scale, const int n_iters) {
     int n_rows = in_v.size();
     if (n_rows < 1) {
 	throw std::invalid_argument("vector's row count must be more than 0");

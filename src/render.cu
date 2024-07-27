@@ -1,6 +1,7 @@
 #include "render.h"
 #include <GL/gl.h>
 #include <climits>
+#include <concepts>
 #include <cuda_gl_interop.h>
 #include <GL/glext.h>
 #include <cstdio>
@@ -19,28 +20,29 @@ inline void cu_err(cudaError_t code, const char* file, int line) {
 unsigned int size;
 
 
-typedef cuda::std::complex<float> Complex;
-
-__device__ Complex screen_space_to_complex(const int x, const int y, const int x_c, const int y_c, const float x_fc, const float y_fc, const float scale) {
-    float re = ((x - x_c) / scale) + x_fc;
-    float im = ((y - y_c) / scale) + y_fc;
-    return Complex{ re, im };
+template <std::floating_point T>
+__device__ cuda::std::complex<T> screen_space_to_complex(const int x, const int y, const int x_c, const int y_c, const T x_fc, const T y_fc, const T scale) {
+    T re = ((x - x_c) / scale) + x_fc;
+    T im = ((y - y_c) / scale) + y_fc;
+    return cuda::std::complex<T>{ re, im };
 }
 
 #define proportion_curve(in) in;
 
-__device__ float do_mb(const Complex p, const int n_iters) {
-    Complex c = p;
-    Complex z = Complex{0, 0};
+template <std::floating_point T>
+__device__ float do_mb(const cuda::std::complex<T> p, const int n_iters) {
+    cuda::std::complex<T> c = p;
+    cuda::std::complex<T> z = cuda::std::complex<T>{0, 0};
     int iters = 0;
     while (iters < n_iters && cuda::std::abs(z) < 2) {
-	z = cuda::std::pow(z, 2.0f) + c;
+	z = cuda::std::pow(z, static_cast<T>(2)) + c;
 	iters++;
     }
     return proportion_curve((float) iters / n_iters);
 }
 
-__global__ void mb_kernel(unsigned char* data, int cx, int cy, float fcx, float fcy, float scale, int n_iters, int n_rows, int n_cols) {
+template <std::floating_point T>
+__global__ void mb_kernel(unsigned char* data, int cx, int cy, T fcx, T fcy, T scale, int n_iters, int n_rows, int n_cols) {
     int r = blockIdx.y * blockDim.y + threadIdx.y;
     int c = blockIdx.x * blockDim.x + threadIdx.x;
     if (r < n_rows && c < n_cols) {
@@ -53,7 +55,8 @@ __global__ void mb_kernel(unsigned char* data, int cx, int cy, float fcx, float 
     }
 }
 
-void compute_img(unsigned char* dev_ptr, Point center, int width, int height, float scale, int iters) {
+template <std::floating_point T>
+void compute_img(unsigned char* dev_ptr, Point<T> center, int width, int height, T scale, int iters) {
     printf("Running cuda calculations\n");
     int x_c = width / 2, y_c = height / 2;
 
@@ -118,7 +121,8 @@ void subTestTexture(GLuint texture, int width, int height) {
 }
 */
 
-GLuint init(int width, int height) {
+
+__host__ GLuint init(int width, int height) {
     size = width * height * 4;
 
     std::vector<unsigned char> zeroes = std::vector<unsigned char>(size, 0);
@@ -140,7 +144,8 @@ GLuint init(int width, int height) {
 unsigned char* mapped_data;
 size_t mapped_size;
 
-void render(Point center, int width, int height, float scale, int iters) {
+template <typename T>
+void render_t(Point<T> center, int width, int height, T scale, int iters){
     cu_assert(cudaGraphicsMapResources(1, &buf_rs));
     cu_assert(cudaGraphicsResourceGetMappedPointer((void**) &mapped_data, &mapped_size, buf_rs));
     if (mapped_size != size * sizeof(unsigned char)) {
@@ -154,7 +159,17 @@ void render(Point center, int width, int height, float scale, int iters) {
     cu_assert(cudaGraphicsUnmapResources(1, &buf_rs));
 
     subTexture(gl_texture, gl_buf, width, height);
-    //subTexture2(gl_texture, width, height);
+}
+
+/** Need to explicitly instantiate each template. Sad!!! */
+template<>
+void render<float>(Point<float> center, int width, int height, float scale, int iters) {
+    render_t(center, width, height, scale, iters);
+}
+
+template<>
+void render<double>(Point<double> center, int width, int height, double scale, int iters) {
+    render_t(center, width, height, scale, iters);
 }
 
 

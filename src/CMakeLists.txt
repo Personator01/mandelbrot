@@ -46,6 +46,8 @@ add_executable(MandelbrotViewerCuda
 	)
 
 set_target_properties(MandelbrotViewerCuda PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+target_compile_features(MandelbrotViewerCuda PUBLIC cxx_std_20)
+target_compile_features(MandelbrotCuda PUBLIC cxx_std_20)
 
 linklibs(MandelbrotSingle)
 linklibs(MandelbrotCuda)

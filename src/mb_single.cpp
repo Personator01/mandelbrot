@@ -4,7 +4,7 @@
 #define proportion_curve(in) in
 
 //possibly openmp?
-std::complex<float> screen_space_to_complex(const int x, const int y, const int x_c, const int y_c, const Point center, const float scale) {
+std::complex<float> screen_space_to_complex(const int x, const int y, const int x_c, const int y_c, const Point<float> center, const float scale) {
     float re = ((x - x_c) / scale) + center.x;
     float im = (y - y_c) / scale + center.y;
     return std::complex{ re, im };
@@ -23,7 +23,7 @@ float do_mb(const std::complex<float> p, const int n_iters) {
     return proportion_curve((float) iters / n_iters);
 }
 
-void calculate_mb(std::vector<std::vector<float>>& in_v, const Point center, const float scale, const int n_iters) {
+void calculate_mb(std::vector<std::vector<float>>& in_v, const Point<float> center, const float scale, const int n_iters) {
     int n_rows = in_v.size();
     if (n_rows < 1) {
 	throw std::invalid_argument("vector's row count must be more than 0");
